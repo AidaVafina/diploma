@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf-ocr-ui"
+version = "0.1.0"
+description = "Fast PDF text extraction with OCR fallback and Streamlit UI"
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit==1.42.0",
+    "pypdf==5.2.0",
+    "pypdfium2==4.30.0",
+    "pytesseract==0.3.13",
+    "opencv-python-headless==4.11.0.86",
+    "numpy==2.2.2",
+    "Pillow==11.1.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
