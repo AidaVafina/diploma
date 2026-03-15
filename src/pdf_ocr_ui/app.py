@@ -44,6 +44,10 @@ def main() -> None:
         c2.metric("Страниц через OCR", document.pages_ocr)
         c3.metric("Статей", len(articles))
 
+        if document.orthography:
+            label = "дореформенная" if document.orthography.pre_reform else "современная"
+            st.write(f"Орфография: {label}")
+
         st.subheader("Текст документа")
         st.text_area("Результат", value=document.text, height=500)
 

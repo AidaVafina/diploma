@@ -10,6 +10,7 @@ import pypdfium2 as pdfium
 from pdf_ocr_ui.settings import OCRSettings
 from pdf_ocr_ui.services.ocr_service import ocr_image_with_layout
 from pdf_ocr_ui.services.article_service import split_into_articles
+from pdf_ocr_ui.services.orthography_service import detect_pre_reform
 from pdf_ocr_ui.types import ArticleText, DocumentText, PageText
 
 
@@ -52,7 +53,7 @@ def extract_text_from_pdf(
 
     pages_total = len(native_text_by_page)
     if pages_total == 0:
-        return DocumentText(pages_total=0, pages_ocr=0, text=""), [], []
+        return DocumentText(pages_total=0, pages_ocr=0, text="", orthography=detect_pre_reform("")), [], []
 
     ocr_indices = [
         i for i, txt in enumerate(native_text_by_page) if _needs_ocr(txt, settings.min_native_chars)
@@ -77,6 +78,7 @@ def extract_text_from_pdf(
     page_results: list[PageText] = []
     raw_pages_for_articles: list[tuple[int, str]] = []
     merged: list[str] = []
+    analysis_texts: list[str] = []
 
     for page_idx, native_text in enumerate(native_text_by_page):
         ocr_text = ocr_text_by_page.get(page_idx, "")
@@ -95,11 +97,14 @@ def extract_text_from_pdf(
 
         page_results.append(PageText(page_number=page_idx + 1, method=method, text=final_text))
         merged.append(f"===== Page {page_idx + 1} ({method}) =====\n{final_text}")
+        analysis_texts.append(final_text)
 
+    orthography = detect_pre_reform("\n".join(analysis_texts))
     document = DocumentText(
         pages_total=pages_total,
         pages_ocr=sum(1 for p in page_results if p.method == "ocr"),
         text="\n\n".join(merged).strip(),
+        orthography=orthography,
     )
     articles = split_into_articles(raw_pages_for_articles)
     return document, page_results, articles
