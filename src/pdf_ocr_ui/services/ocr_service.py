@@ -67,7 +67,11 @@ def _score_candidate(image: np.ndarray, language: str, config: str) -> OCRCandid
     return OCRCandidate(text=" ".join(words), confidence=avg_conf)
 
 
-def _best_ocr_text(np_image: np.ndarray, settings: OCRSettings) -> str:
+def _normalize_text(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _select_best_variant(np_image: np.ndarray, settings: OCRSettings) -> tuple[np.ndarray, str]:
     gray = _to_grayscale(np_image)
     denoised = _denoise(gray)
 
@@ -81,13 +85,23 @@ def _best_ocr_text(np_image: np.ndarray, settings: OCRSettings) -> str:
     configs = ["--oem 3 --psm 6", "--oem 3 --psm 11"]
 
     best = OCRCandidate(text="", confidence=0.0)
+    best_variant = variants[0]
+    best_config = configs[0]
     for variant in variants:
         for config in configs:
             candidate = _score_candidate(variant, settings.language, config)
             if candidate.confidence > best.confidence and len(candidate.text) > len(best.text) * 0.7:
                 best = candidate
+                best_variant = variant
+                best_config = config
 
-    return best.text
+    return best_variant, best_config
+
+
+def _best_ocr_text(np_image: np.ndarray, settings: OCRSettings) -> str:
+    variant, config = _select_best_variant(np_image, settings)
+    raw_text = pytesseract.image_to_string(variant, lang=settings.language, config=config)
+    return _normalize_text(raw_text)
 
 
 def render_page_to_image(pdf_bytes: bytes, page_index: int, settings: OCRSettings) -> np.ndarray:
@@ -107,3 +121,9 @@ def ocr_page(pdf_bytes: bytes, page_index: int, settings: OCRSettings) -> str:
 
 def ocr_image(np_image: np.ndarray, settings: OCRSettings) -> str:
     return _best_ocr_text(np_image, settings)
+
+
+def ocr_image_with_layout(np_image: np.ndarray, settings: OCRSettings) -> tuple[str, str]:
+    variant, config = _select_best_variant(np_image, settings)
+    raw_text = pytesseract.image_to_string(variant, lang=settings.language, config=config)
+    return _normalize_text(raw_text), raw_text

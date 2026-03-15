@@ -11,6 +11,15 @@ class PageText:
 
 
 @dataclass(slots=True)
+class ArticleText:
+    article_id: int
+    title: str
+    page_start: int
+    page_end: int
+    text: str
+
+
+@dataclass(slots=True)
 class DocumentText:
     pages_total: int
     pages_ocr: int

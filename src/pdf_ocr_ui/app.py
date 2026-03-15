@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import pytesseract
 import streamlit as st
 
@@ -35,12 +36,13 @@ def main() -> None:
 
         with st.spinner("Сканирование документа..."):
             pdf_bytes = uploaded.getvalue()
-            document, pages = extract_text_from_pdf(pdf_bytes, get_settings())
+            document, pages, articles = extract_text_from_pdf(pdf_bytes, get_settings())
 
         st.success("Готово")
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
         c1.metric("Всего страниц", document.pages_total)
         c2.metric("Страниц через OCR", document.pages_ocr)
+        c3.metric("Статей", len(articles))
 
         st.subheader("Текст документа")
         st.text_area("Результат", value=document.text, height=500)
@@ -51,6 +53,32 @@ def main() -> None:
             file_name=f"{uploaded.name.rsplit('.', 1)[0]}_extracted.txt",
             mime="text/plain",
         )
+
+        if articles:
+            st.subheader("Статьи")
+            with st.expander("Список статей", expanded=False):
+                for article in articles:
+                    st.write(
+                        f"#{article.article_id} — {article.title} "
+                        f"(стр. {article.page_start}-{article.page_end})"
+                    )
+
+            articles_payload = [
+                {
+                    "article_id": a.article_id,
+                    "title": a.title,
+                    "page_start": a.page_start,
+                    "page_end": a.page_end,
+                    "text": a.text,
+                }
+                for a in articles
+            ]
+            st.download_button(
+                label="Скачать статьи (JSON)",
+                data=json.dumps(articles_payload, ensure_ascii=False, indent=2).encode("utf-8"),
+                file_name=f"{uploaded.name.rsplit('.', 1)[0]}_articles.json",
+                mime="application/json",
+            )
 
         with st.expander("Постраничная диагностика", expanded=False):
             for page in pages:
