@@ -58,6 +58,20 @@ def main() -> None:
             mime="text/plain",
         )
 
+        if document.modern_text:
+            st.subheader("Текст после преобразования")
+            st.text_area(
+                "Результат (современная орфография)",
+                value=document.modern_text,
+                height=500,
+            )
+            st.download_button(
+                label="Скачать TXT (современная орфография)",
+                data=document.modern_text.encode("utf-8"),
+                file_name=f"{uploaded.name.rsplit('.', 1)[0]}_modern.txt",
+                mime="text/plain",
+            )
+
         if articles:
             st.subheader("Статьи")
             with st.expander("Список статей", expanded=False):

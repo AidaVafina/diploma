@@ -37,3 +37,4 @@ class DocumentText:
     pages_ocr: int
     text: str
     orthography: OrthographyReport | None = None
+    modern_text: str | None = None

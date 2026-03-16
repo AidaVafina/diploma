@@ -11,6 +11,7 @@ from pdf_ocr_ui.settings import OCRSettings
 from pdf_ocr_ui.services.ocr_service import ocr_image_with_layout
 from pdf_ocr_ui.services.article_service import split_into_articles
 from pdf_ocr_ui.services.orthography_service import detect_pre_reform
+from pdf_ocr_ui.services.pre_reform_translation_service import translate_text
 from pdf_ocr_ui.types import ArticleText, DocumentText, PageText
 
 
@@ -100,11 +101,19 @@ def extract_text_from_pdf(
         analysis_texts.append(final_text)
 
     orthography = detect_pre_reform("\n".join(analysis_texts))
+    modern_text = None
+    if orthography.pre_reform:
+        modern_pages: list[str] = []
+        for page in page_results:
+            translated = translate_text(page.text)
+            modern_pages.append(f"===== Page {page.page_number} ({page.method}) =====\n{translated}")
+        modern_text = "\n\n".join(modern_pages).strip()
     document = DocumentText(
         pages_total=pages_total,
         pages_ocr=sum(1 for p in page_results if p.method == "ocr"),
         text="\n\n".join(merged).strip(),
         orthography=orthography,
+        modern_text=modern_text,
     )
     articles = split_into_articles(raw_pages_for_articles)
     return document, page_results, articles

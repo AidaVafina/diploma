@@ -5,3 +5,5 @@ pytesseract==0.3.13
 opencv-python-headless==4.11.0.86
 numpy==2.2.2
 Pillow==11.1.0
+pymorphy3==2.0.2
+flashtext==2.7
